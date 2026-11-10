@@ -23,12 +23,11 @@ public class SimilitudService {
     @Transactional
     public List<ResultadoSimilitudEntity> analizarYGuardar(List<Entrega> entregas) {
 
-        // Validar que la lista no venga vacía o nula para evitar sorpresas
         if (entregas == null || entregas.isEmpty()) {
             return List.of();
         }
 
-        // 1. Convertir la petición web a Entidades y guardarlas en PostgreSQL
+        // 1. Crear las entidades y asegurar la normalización de una vez
         List<EntregaEntity> entregasEntities = entregas.stream()
                 .map(e -> EntregaEntity.builder()
                         .autor(e.autor() != null ? e.autor() : "Desconocido")
@@ -40,11 +39,17 @@ public class SimilitudService {
 
         entregaRepository.saveAll(entregasEntities);
 
-        // 2. Ejecutar tu motor de comparación inyectando la métrica correcta
-        ComparadorMasivo comparador = new ComparadorMasivo(new MetricaDistanciaEdicion());
-        List<ParejaSimilitud> resultadosCalculados = comparador.compararTodas(entregas);
+        // 2. ¡IMPORTANTE! Reconvertimos las entidades guardadas (o normalizadas) a objetos de dominio
+        // para que el comparador reciba el texto normalizado y no llegue nulo.
+        List<Entrega> entregasNormalizadasParaComparar = entregasEntities.stream()
+                .map(ent -> new Entrega(ent.getAutor(), ent.getTextoOriginal(), ent.getTextoNormalizado()))
+                .toList();
 
-        // 3. Convertir los resultados algorítmicos a Entidades y guardarlos
+        // 3. Ejecutar el comparador con los datos ya limpios y normalizados
+        ComparadorMasivo comparador = new ComparadorMasivo(new MetricaDistanciaEdicion());
+        List<ParejaSimilitud> resultadosCalculados = comparador.compararTodas(entregasNormalizadasParaComparar);
+
+        // 4. Guardar resultados
         List<ResultadoSimilitudEntity> resultadosEntities = resultadosCalculados.stream()
                 .map(r -> ResultadoSimilitudEntity.builder()
                         .autor1(r.entregaA().autor())
