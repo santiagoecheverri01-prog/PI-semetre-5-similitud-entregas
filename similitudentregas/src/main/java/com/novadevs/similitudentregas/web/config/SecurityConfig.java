@@ -1,4 +1,4 @@
-package com.novadevs.similitudentregas.web;
+package com.novadevs.similitudentregas.web.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,11 +14,12 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(AbstractHttpConfigurer::disable)
+                .csrf(AbstractHttpConfigurer::disable) // Desactivar CSRF para Postman
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/similitud/**").permitAll()
+                        .requestMatchers("/api/similitud/**").permitAll() // Permitir todo lo de similitud directamente
                         .anyRequest().authenticated()
                 );
+
         return http.build();
     }
 }

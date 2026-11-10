@@ -9,7 +9,10 @@ public class FiltroNGramas {
     private static final double UMBRAL_MINIMO = 0.2; // Requiere al menos 20% de coincidencia para pasar al algoritmo pesado
 
     public boolean sonCandidatos(String texto1, String texto2) {
-        if (texto1.isEmpty() || texto2.isEmpty()) return false;
+        // Validación estricta para evitar NullPointerException si algún texto viene nulo
+        if (texto1 == null || texto2 == null || texto1.isEmpty() || texto2.isEmpty()) {
+            return false;
+        }
 
         Set<String> nGramas1 = generarNGramas(texto1);
         Set<String> nGramas2 = generarNGramas(texto2);
@@ -24,12 +27,19 @@ public class FiltroNGramas {
         Set<String> union = new HashSet<>(nGramas1);
         union.addAll(nGramas2);
 
+        if (union.isEmpty()) return false;
+
         double coeficienteJaccard = (double) interseccion.size() / union.size();
         return coeficienteJaccard >= UMBRAL_MINIMO;
     }
 
     private Set<String> generarNGramas(String texto) {
         Set<String> ngramas = new HashSet<>();
+
+        if (texto == null || texto.isEmpty()) {
+            return ngramas;
+        }
+
         String[] palabras = texto.split(" ");
 
         if (palabras.length < N) {
@@ -40,6 +50,7 @@ public class FiltroNGramas {
         for (int i = 0; i <= palabras.length - N; i++) {
             ngramas.add(palabras[i] + " " + palabras[i+1] + " " + palabras[i+2]);
         }
+
         return ngramas;
     }
 }
